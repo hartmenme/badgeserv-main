@@ -1,0 +1,11 @@
+.idea
+node_modules
+/badgeserv
+/bin
+/.bin
+/.coverage
+/release
+/.cover.out
+/test-configs
+/.junit
+

@@ -1,0 +1,3 @@
+#!/bin/bash -l
+go run mage.go lint
+exit $?

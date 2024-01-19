@@ -1,0 +1,251 @@
+---
+openapi: 3.0.0
+info:
+  version: 1.0.0
+  title: badgeserv
+  license:
+    name: MIT
+  description: |
+    No-Nonsense badge generator service. Ideal for on-premises hosting!
+servers:
+- url: http://localhost:8080/api/v1
+components:
+  schemas:
+    PingResponse:
+      description: API availability response endpoint
+      type: object
+      properties:
+        status:
+          type: string
+          enum:
+          - ok
+        responded_at:
+          type: string
+          format: date-time
+        version:
+          type: string
+    ParameterDesc:
+      type: object
+      description: Parameter description
+      properties:
+        name:
+          type: string
+          description: Name of the parameter
+        description:
+          type: string
+          description: Description of the parameter
+    PredefinedBadgeDesc:
+      description: Definition of a predefined badge
+      type: object
+      properties:
+        name:
+          type: string
+          description: Name of the badge
+        description:
+          type: string
+          description: Description of what the badge does
+        parameters:
+          type: array
+          items:
+          - type: object
+            properties:
+              schema:
+                $ref: "#/components/schemas/ParameterDesc"
+
+    ClientError:
+      description: error object for client errors
+      type: object
+      properties:
+        description:
+          type: string
+        error:
+          type: string
+      required:
+      - description
+      - error
+paths:
+  /openapi.yaml:
+    get:
+      tags:
+      - help
+      description: return this openapi specification
+      responses:
+        "200":
+          description: OK
+          content:
+            text/vnd.yaml:
+              schema:
+                type: string
+  /ping:
+    get:
+      tags:
+      - status
+      description: service availability check endpoint
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PingResponse"
+  /badge/static:
+    get:
+      tags:
+      - generate
+      description: |
+        Generate a static badge based on the supplied parameters
+      parameters:
+      - in: query
+        name: label
+        description: Pongo2 format string to display for fo the badge label
+        required: false
+        schema:
+          type: string
+      - in: query
+        name: message
+        description: Pongo2 format string to display for fo the badge message
+        required: false
+        schema:
+          type: string
+      - in: query
+        name: color
+        description: Pongo2 format string to select a badge color by
+        required: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: Returns the badge
+          content:
+            image/svg+xml:
+        "400":
+          description: Client Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClientError"
+  
+  /badge/dynamic:
+    get:
+      tags:
+      - generate
+      description: |
+        Generate a dynamic badge based on the supplied parameters. A dynamic badge is built from data fetched from
+        a target source and pongo2 formatted rendering strings.
+      parameters:
+      - in: query
+        name: target
+        description: URL of the server to fetch dynamic data from.
+        required: true
+        schema:
+          type: string
+      - in: query
+        name: label
+        description: Pongo2 format string to display for fo the badge label
+        required: false
+        schema:
+          type: string
+      - in: query
+        name: message
+        description: Pongo2 format string to display for fo the badge message
+        required: false
+        schema:
+          type: string
+      - in: query
+        name: color
+        description: Pongo2 format string to select a badge color by
+        required: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: Returns the badge
+          content:
+            image/svg+xml:
+        "400":
+          description: Client Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClientError"
+
+#   /badge/endpoint:
+#     get:
+#       tags:
+#       - generate
+#       description: |
+#         Endpoint badges implement a compatible interface similar to [shields.io](https://shields.io) and
+#         [badgen.net](https://badgen.net).
+#       parameters:
+#       - in: query
+#         name: target
+#         required: true
+#         schema:
+#           type: string
+#       responses:
+#         "200":
+#           description: Returns the badge
+#           content:
+#             image/svg+xml:
+#         "400":
+#           description: Client Error
+#           content:
+#             application/json:
+#               schema:
+#                 $ref: "#/components/schemas/ClientError"
+
+  /badge/predefined:
+    get:
+      tags:
+      - generate
+      description: |
+        Display the list of predefined badges and their parameter descriptions.
+        Predefined parameters are essentially dynamic badges with fixed templates and targets. This is useful for
+        including secrets to access services.
+      responses:
+        "200":
+          description: Return the list of predefined badges
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ParameterDesc"
+        "400":
+          description: Client Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClientError"
+      
+
+  /badge/predefined/{predefined_name}:
+    get:
+      tags:
+      - generate
+      description: |
+        Generate a static badge based on the supplied parameters
+      parameters:
+      - in: path
+        name: predefined_name
+        description: The predefined badge name to return a query for.
+        required: true
+        schema:
+          type: string
+      - in: query
+        name: params
+        description: Predefined badges may define custom parameters to control templating.
+        schema:
+          type: object
+          additionalProperties: true
+        style: form
+        explode: true
+      responses:
+        "200":
+          description: Returns the badge
+          content:
+            image/svg+xml:
+        "400":
+          description: Client Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClientError"
