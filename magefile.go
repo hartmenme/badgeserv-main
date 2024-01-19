@@ -1,3 +1,5 @@
+//go:build mage
+
 // Self-contained go-project magefile.
 
 //nolint:deadcode,gochecknoglobals,gochecknoinits,wrapcheck,varnamelen,gomnd,forcetypeassert,forbidigo,funlen,gocognit,cyclop,nolintlint

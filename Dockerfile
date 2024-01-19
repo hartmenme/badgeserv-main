@@ -11,7 +11,6 @@ RUN go run mage.go binary
 
 FROM scratch
 
-MAINTAINER Will Rouesnel <wrouesnel@wrouesnel.com>
 EXPOSE 8080
 
 ENV PATH=/bin
