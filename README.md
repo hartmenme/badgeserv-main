@@ -53,7 +53,9 @@ Hashicorp Vault directly, for maximum configuration security.
 
 ## Coming Soon
 
-The following features will be implemented soon
+I think we can implement something like rendering dynamic badges based on the http code.(DONE)
+We can also try and implement an API of the badges instead of giving the SVG that would return some kinda of json format
+of the values.(To be implemented)
 
 ### Endpoint Badges
 
