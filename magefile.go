@@ -626,6 +626,22 @@ func listCoverageFiles() ([]string, error) {
 	return result, nil
 }
 
+// Clean deletes build output and cleans up the working directory.
+func Clean() error {
+	for _, name := range goCmds {
+		if err := sh.Rm(path.Join(binDir, name)); err != nil {
+			return err
+		}
+	}
+
+	for _, name := range outputDirs {
+		if err := sh.Rm(name); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 // Test run test suite.
 func Test() error {
 	mg.Deps(Tools)
@@ -866,22 +882,6 @@ func ReleaseAll() error {
 	}
 
 	return waitResults(buildResults)()
-}
-
-// Clean deletes build output and cleans up the working directory.
-func Clean() error {
-	for _, name := range goCmds {
-		if err := sh.Rm(path.Join(binDir, name)); err != nil {
-			return err
-		}
-	}
-
-	for _, name := range outputDirs {
-		if err := sh.Rm(name); err != nil {
-			return err
-		}
-	}
-	return nil
 }
 
 // Debug prints the value of internal state variables

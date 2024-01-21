@@ -159,6 +159,7 @@ type ServerInterfaceWrapper struct {
 	Handler ServerInterface
 }
 
+//todo: learn about the pointer reciver parttern in golang
 // GetBadgeDynamic converts echo context to params.
 func (w *ServerInterfaceWrapper) GetBadgeDynamic(ctx echo.Context) error {
 	var err error
@@ -212,7 +213,7 @@ func (w *ServerInterfaceWrapper) GetBadgePredefinedPredefinedName(ctx echo.Conte
 	var err error
 	// ------------- Path parameter "predefined_name" -------------
 	var predefinedName string
-
+	//here we grab out the path parameter after the predefined so if the url is like predefined/bade_name it will grab out badgename
 	err = runtime.BindStyledParameterWithLocation("simple", false, "predefined_name", runtime.ParamLocationPath, ctx.Param("predefined_name"), &predefinedName)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter predefined_name: %s", err))

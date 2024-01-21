@@ -45,6 +45,7 @@ func (a *apiImpl) generateETag(in []byte) string {
 }
 
 func (a *apiImpl) GetBadgeDynamic(ctx echo.Context, params GetBadgeDynamicParams) error {
+	//this params will contain things from the predefined badge if we were to go ahead with the predefined badge
 	target := params.Target
 
 	a.logger.Debug("Making outbound request", zap.String("target", target))
@@ -55,6 +56,23 @@ func (a *apiImpl) GetBadgeDynamic(ctx echo.Context, params GetBadgeDynamicParams
 			Description: "Target HTTP request failed",
 			Error:       err.Error(),
 		})
+	}
+	//todo: based on the response code of the http method set the different values
+	// Check response status code
+	// Check response status code
+	statusCode := resp.StatusCode()
+	if statusCode >= 200 && statusCode <= 299 {
+		// If status code is 20x, set color to green and message to "OK"
+		green := "green"
+		ok := "OK"
+		params.Color = &green
+		params.Message = &ok
+	} else {
+		// If status code is not 20x, set color to red and message to "Failed"
+		red := "red"
+		failed := "Failed"
+		params.Color = &red
+		params.Message = &failed
 	}
 
 	var responseData interface{}
@@ -67,7 +85,7 @@ func (a *apiImpl) GetBadgeDynamic(ctx echo.Context, params GetBadgeDynamicParams
 
 	templateCtx := map[string]interface{}{}
 	templateCtx[DynamicBadgeResponseName] = responseData
-
+	//here see,s ;ole we are pumping in data to make the badge
 	return a.getBadge(ctx, GetBadgeStaticParams{
 		Label:   params.Label,
 		Message: params.Message,
@@ -81,6 +99,7 @@ func (a *apiImpl) GetBadgePredefined(ctx echo.Context) error {
 }
 
 func (a *apiImpl) GetBadgePredefinedPredefinedName(ctx echo.Context, predefinedName string, params GetBadgePredefinedPredefinedNameParams) error {
+	//here is where we acutally check the predefined yaml that is loaded into this map
 	badgeDef, ok := a.predefinedBadges.PredefinedBadges[predefinedName]
 	if !ok {
 		return ctx.JSON(http.StatusNotFound, &ClientError{
@@ -158,6 +177,9 @@ func (a *apiImpl) executeTemplate(ctx echo.Context, paramName string, template *
 }
 
 func (a *apiImpl) getBadge(ctx echo.Context, params GetBadgeStaticParams, templateCtx pongo2.Context) error {
+	/*
+		params contain information about label{{r.brand}}, message{{r.title}}, color"red"
+	*/
 	if templateCtx == nil {
 		templateCtx = map[string]interface{}{}
 	}

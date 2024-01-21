@@ -2,6 +2,7 @@ package server
 
 import (
 	"fmt"
+	"github.com/labstack/echo-contrib/prometheus"
 	"io"
 	"io/fs"
 	"net/url"
@@ -12,7 +13,6 @@ import (
 	"github.com/brpaz/echozap"
 	"github.com/flosch/pongo2/v6"
 	"github.com/go-resty/resty/v2"
-	"github.com/labstack/echo-contrib/prometheus"
 	"github.com/labstack/echo/v4"
 	"github.com/pkg/errors"
 	"github.com/samber/lo"
@@ -130,7 +130,7 @@ func getPredefinedBadgesTemplateData(predefinedBadgeConfig *badgeconfig.Config) 
 func API(serverConfig APIServerConfig, badgeConfig badges.BadgeConfig, assetConfig assets.Config, badgeConfigDir string) error {
 	logger := zap.L()
 
-	predefinedBadgeConfig, err := loadBadgeConfig(badgeConfigDir)
+	predefinedBadgeConfig, err := loadBadgeConfig(badgeConfigDir) //loads the assets
 	if err != nil {
 		return errors.Wrap(err, "API")
 	}

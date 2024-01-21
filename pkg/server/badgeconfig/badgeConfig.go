@@ -69,7 +69,7 @@ func loadConfigMap(configBytes []byte) (map[string]interface{}, error) {
 
 // Load loads a configuration file from the supplied bytes.
 func Load(configData []byte) (*Config, error) {
-	//defaultMap := loadDefaultConfigMap()
+	//defaultMap := loadDefaultConfigMap()x
 	configMap, err := loadConfigMap(configData)
 	if err != nil {
 		return nil, errors.Wrap(err, "Load: failed")
