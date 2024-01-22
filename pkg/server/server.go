@@ -172,6 +172,7 @@ func API(serverConfig APIServerConfig, badgeConfig badges.BadgeConfig, assetConf
 	templateGlobals["PredefinedBadges"] = getPredefinedBadgesTemplateData(predefinedBadgeConfig)
 
 	logger.Info("Starting API server")
+	//inside this APIConfigure, we are passing the Implementation of the ServiceInterface
 	if err := Server(serverConfig, assetConfig, templateGlobals, APIConfigure(serverConfig, apiInstance, apiPrefix)); err != nil {
 		logger.Error("Error from server", zap.Error(err))
 		return errors.Wrap(err, "Server exiting with error")
@@ -191,7 +192,7 @@ func APIConfigure[T api.ServerInterface](serverConfig APIServerConfig, apiInstan
 			zap.String("configured_prefix", serverConfig.Prefix),
 			zap.String("api_prefix", apiPrefix),
 			zap.String("api_basepath", fullAPIPrefix))
-
+		//here is where we actually enter the wrapper
 		api.RegisterHandlersWithBaseURL(e, apiInstance, fullAPIPrefix)
 		// Add the Swagger API as the frontend.
 		uiPrefix := fmt.Sprintf("%s/ui", fullAPIPrefix)

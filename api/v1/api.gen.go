@@ -152,6 +152,15 @@ type ServerInterface interface {
 
 	// (GET /ping)
 	GetPing(ctx echo.Context) error
+	//
+	GetBadgeDynamicJSON(ctx echo.Context) error
+
+	GetBadgePredefinedPredefinedNameJSON(ctx echo.Context, predefinedName string) error
+	//
+	//
+	//processTargetURL(targetURL string ) error
+
+
 }
 
 // ServerInterfaceWrapper converts echo contexts to parameters.
@@ -283,6 +292,36 @@ func (w *ServerInterfaceWrapper) GetPing(ctx echo.Context) error {
 	return err
 }
 
+
+
+//set up this method in the wrapper
+func (w *ServerInterfaceWrapper) GetBadgeDynamicJSON(ctx echo.Context) error {
+	return w.Handler.GetBadgeDynamicJSON(ctx)
+}
+
+//func (w *ServerInterfaceWrapper) GetBadgePredefinedPredefinedNameJSON(ctx echo.Context, predefinedName string) error {
+//	return w.Handler.GetBadgePredefinedPredefinedNameJSON(ctx, predefinedName)
+//}
+//
+//
+//func predefinedBadgeJSONHandler(w *ServerInterfaceWrapper) echo.HandlerFunc {
+//	return func(ctx echo.Context) error {
+//		predefinedName := ctx.Param("predefined_name")
+//		return w.GetBadgePredefinedPredefinedNameJSON(ctx, predefinedName)
+//	}
+//}
+
+
+func (w *ServerInterfaceWrapper) GetBadgePredefinedPredefinedNameJSON(ctx echo.Context) error {
+	predefinedName := ctx.Param("predefined_name")
+	return w.Handler.GetBadgePredefinedPredefinedNameJSON(ctx, predefinedName)
+}
+
+
+
+
+
+
 // This is a simple interface which specifies echo.Route addition functions which
 // are present on both echo.Echo and echo.Group, since we want to allow using
 // either of them for path registration
@@ -306,17 +345,30 @@ func RegisterHandlers(router EchoRouter, si ServerInterface) {
 // Registers handlers, and prepends BaseURL to the paths, so that the paths
 // can be served under a prefix.
 func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL string) {
-
+	//here is us trying to intialize a golang struct... pretty interesting syntax if you ask me
+	//here is where we setup the wrapper, with the si been the instance of NewAPI()
 	wrapper := ServerInterfaceWrapper{
 		Handler: si,
 	}
-
+	router.GET(baseURL+"/badge/dynamicjson", wrapper.GetBadgeDynamicJSON)
 	router.GET(baseURL+"/badge/dynamic", wrapper.GetBadgeDynamic)
 	router.GET(baseURL+"/badge/predefined", wrapper.GetBadgePredefined)
 	router.GET(baseURL+"/badge/predefined/:predefined_name/", wrapper.GetBadgePredefinedPredefinedName)
 	router.GET(baseURL+"/badge/static", wrapper.GetBadgeStatic)
 	router.GET(baseURL+"/openapi.yaml", wrapper.GetOpenapiYaml)
 	router.GET(baseURL+"/ping", wrapper.GetPing)
+	//router.GET("/badge/dynamic/json", wrapper.GetBadgeDynamicJSON)
+	//GetBadgePredefinedPredefinedNameJSON
+	//router.GET("/badge/predefined/json/:predefined_name", wrapper.predefinedBadgeJSONHandler)
+	//router.GET(baseURL+"/badge/predefined/json/:predefined_name/", predefinedBadgeJSONHandler(&wrapper))
+
+	router.GET(baseURL+"/badge/predefined/json/:predefined_name/",wrapper.GetBadgePredefinedPredefinedNameJSON)
+
+
+
+	//todo: we need to register the new API at this level
+	//router.GET(baseURL+"/badge/dynamic-json", wrapper.G)
+
 
 }
 

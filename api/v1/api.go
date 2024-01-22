@@ -57,7 +57,6 @@ func (a *apiImpl) GetBadgeDynamic(ctx echo.Context, params GetBadgeDynamicParams
 			Error:       err.Error(),
 		})
 	}
-	//todo: based on the response code of the http method set the different values
 	// Check response status code
 	// Check response status code
 	statusCode := resp.StatusCode()
@@ -282,4 +281,159 @@ func (a *apiImpl) GetPing(ctx echo.Context) error {
 		Status:      &status,
 		Version:     &a.version,
 	})
+}
+
+func (a *apiImpl) GetBadgeDynamicJSON(ctx echo.Context) error {
+	targetURL := ctx.QueryParam("target")
+
+	// Call a function to process the target URL and determine color and message
+	color, message, err := a.processTargetURL(targetURL)
+	if err != nil {
+		// Handle error: Could not process target URL or failed to determine color/message
+		return ctx.JSON(http.StatusInternalServerError, &ClientError{
+			Description: "Error processing target URL",
+			Error:       err.Error(),
+		})
+	}
+
+	// Create the response
+	responseData := struct {
+		Target  string `json:"target"`
+		Color   string `json:"color"`
+		Message string `json:"message"`
+	}{
+		Target:  targetURL,
+		Color:   color,
+		Message: message,
+	}
+
+	// Return the JSON response
+	return ctx.JSON(http.StatusOK, responseData)
+}
+
+//
+func (a *apiImpl) processTargetURL(targetURL string) (color string, message string, err error) {
+	// Make HTTP request to the targetURL
+	resp, err := a.httpClient.NewRequest().Get(targetURL)
+	if err != nil {
+		return "", "", err
+	}
+	statusCode := resp.StatusCode()
+	if statusCode >= 200 && statusCode <= 299 {
+		color = "green"
+		message = "OK"
+	} else {
+		color = "red"
+		message = "Failed"
+	}
+
+	return color, message, nil
+}
+
+//todo: add a json endpoint for the predefined badges
+
+func (a *apiImpl) GetPreDefinedJson(ctx echo.Context) error {
+	targetURL := ctx.QueryParam("target")
+
+	// Call a function to process the target URL and determine color and message
+	color, message, err := a.processTargetURL(targetURL)
+	if err != nil {
+		// Handle error: Could not process target URL or failed to determine color/message
+		return ctx.JSON(http.StatusInternalServerError, &ClientError{
+			Description: "Error processing target URL",
+			Error:       err.Error(),
+		})
+	}
+
+	// Create the response
+	responseData := struct {
+		Target  string `json:"target"`
+		Color   string `json:"color"`
+		Message string `json:"message"`
+	}{
+		Target:  targetURL,
+		Color:   color,
+		Message: message,
+	}
+
+	// Return the JSON response
+	return ctx.JSON(http.StatusOK, responseData)
+}
+
+func (a *apiImpl) GetBadgePredefinedPredefinedNameJSON(ctx echo.Context, predefinedName string) error {
+	badgeDef, ok := a.predefinedBadges.PredefinedBadges[predefinedName]
+	if !ok {
+		return ctx.JSON(http.StatusNotFound, &ClientError{
+			Description: "Predefined badge not found",
+			Error:       "Badge not found",
+		})
+	}
+
+	// Fetch data from the downstream service
+	downstreamData, err := a.fetchDataFromDownstream(badgeDef.Target)
+	if err != nil {
+		return ctx.JSON(http.StatusInternalServerError, &ClientError{
+			Description: "Error fetching data from downstream",
+			Error:       err.Error(),
+		})
+	}
+
+	// Prepare data for template execution
+	templateData := map[string]interface{}{
+		"r": downstreamData, // Assuming the placeholders are like {{ r.someKey }}
+	}
+
+	// Replace placeholders in the badge template with actual values
+	label, err := replacePlaceholders(badgeDef.Label, templateData)
+	if err != nil {
+		return ctx.JSON(http.StatusInternalServerError, &ClientError{
+			Description: "Error processing label template",
+			Error:       err.Error(),
+		})
+	}
+	message, err := replacePlaceholders(badgeDef.Message, templateData)
+	if err != nil {
+		return ctx.JSON(http.StatusInternalServerError, &ClientError{
+			Description: "Error processing message template",
+			Error:       err.Error(),
+		})
+	}
+
+	responseData := struct {
+		Label   string `json:"label"`
+		Message string `json:"message"`
+		Color   string `json:"color"`
+	}{
+		Label:   label,
+		Message: message,
+		Color:   badgeDef.Color,
+	}
+
+	return ctx.JSON(http.StatusOK, responseData)
+}
+
+func replacePlaceholders(template string, data map[string]interface{}) (string, error) {
+	t, err := pongo2.FromString(template)
+	if err != nil {
+		return "", err
+	}
+	output, err := t.Execute(pongo2.Context(data))
+	if err != nil {
+		return "", err
+	}
+	return output, nil
+}
+
+func (a *apiImpl) fetchDataFromDownstream(targetURL string) (map[string]interface{}, error) {
+	resp, err := a.httpClient.NewRequest().Get(targetURL)
+	if err != nil {
+		return nil, err
+	}
+
+	var responseData map[string]interface{}
+	if err := json.Unmarshal(resp.Body(), &responseData); err != nil {
+		return nil, err
+	}
+
+	return responseData, nil
 }
